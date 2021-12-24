@@ -17,8 +17,8 @@ pub struct InlineComp {
 }
 
 impl Peek for InlineComp {
-    fn peek(_input: ParseStream) -> bool {
-        true
+    fn peek(input: ParseStream) -> bool {
+        InlineCompTerm::peek(input)
     }
 }
 
