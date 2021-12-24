@@ -1,0 +1,60 @@
+<inline-rust> ::= $ <ident> | $ {<rust>}
+<rust-fn <a>> ::= <inline-rust> ! <a> | <inline-rust> ! <rust-fn <a>>
+
+<id-loc> ::= # "<string>"
+
+<internal-loc> ::= / "<string>"
+
+<url> ::= @ "<string>"
+
+<location> ::= 
+    | <id-loc>
+    | <internal-loc> 
+    | <url>
+
+<text> ::= "<string>"
+
+<bold> ::= b <inline>
+
+<italic> ::= i <inline>
+
+<preformatted> ::= c <inline>
+
+<inline-term> ::=
+    | <text> 
+    | <bold>
+    | <italic> 
+    | <preformatted>
+    | <location>
+    | <inline-rust>
+    | <rust-fn <inline-term>>
+    | (<inline>)
+
+<inline> ::=
+    | <inline-term>
+    | <inline-term> <inline>
+
+<table> ::= t <inline> { <table-rows> }
+
+<table-rows> ::= <∅> | { <table-entries> } <table-rows>
+
+<table-entries> ::= <∅> | <table-entry>, <table-entries> | <table-entry>
+
+<numeric> ::= 
+
+<table-entry> ::=
+    | <inline>
+    | <inline> rows <numeric>
+    | <inline> cols <numeric>
+    | <inline> rows <numeric> cols <numeric>
+    | <inline> cols <numeric> rows <numeric>
+    | h <inline>
+    | h <inline> rows <numeric>
+    | h <inline> cols <numeric>
+    | h <inline> rows <numeric> cols <numeric>
+    | h <inline> cols <numeric> rows <numeric>
+
+<blocking> ::=
+    | p <inline>
+    | i <location> alt "<text>"
+    | <table>
