@@ -1,5 +1,6 @@
 use proc_macro2::Span;
 use syn::{
+    parenthesized,
     parse::{Error, Parse, ParseStream},
     token,
     Ident,
@@ -25,7 +26,14 @@ impl Parse for InlineComp {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let mut this = Self { terms: Vec::new() };
         while InlineCompTerm::peek(input) {
-            this.terms.push(input.parse()?);
+            if input.peek(token::Paren) {
+                let content;
+                parenthesized!(content in input);
+                let mut child = content.parse::<Self>()?;
+                this.terms.append(&mut child.terms);
+            } else {
+                this.terms.push(input.parse()?);
+            }
         }
         Ok(this)
     }
