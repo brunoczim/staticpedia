@@ -8,17 +8,17 @@ use syn::{
 };
 
 #[derive(Debug, Clone)]
-pub struct InlineComp {
-    pub terms: Vec<InlineCompTerm>,
+pub struct Component {
+    pub terms: Vec<ComponentTerm>,
 }
 
-impl Peek for InlineComp {
+impl Peek for Component {
     fn peek(input: ParseStream) -> bool {
-        InlineCompTerm::peek(input) || input.peek(token::Paren)
+        ComponentTerm::peek(input) || input.peek(token::Paren)
     }
 }
 
-impl Parse for InlineComp {
+impl Parse for Component {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let mut this = Self { terms: Vec::new() };
         while Self::peek(input) {
@@ -36,7 +36,7 @@ impl Parse for InlineComp {
 }
 
 #[derive(Debug, Clone)]
-pub enum InlineCompTerm {
+pub enum ComponentTerm {
     Text(Text),
     Location(Location),
     Bold(Bold),
@@ -45,7 +45,7 @@ pub enum InlineCompTerm {
     Link(Link),
 }
 
-impl Peek for InlineCompTerm {
+impl Peek for ComponentTerm {
     fn peek(input: ParseStream) -> bool {
         Text::peek(input)
             || Location::peek(input)
@@ -56,20 +56,20 @@ impl Peek for InlineCompTerm {
     }
 }
 
-impl Parse for InlineCompTerm {
+impl Parse for ComponentTerm {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         if Text::peek(input) {
-            Ok(InlineCompTerm::Text(input.parse()?))
+            Ok(ComponentTerm::Text(input.parse()?))
         } else if Location::peek(input) {
-            Ok(InlineCompTerm::Location(input.parse()?))
+            Ok(ComponentTerm::Location(input.parse()?))
         } else if Bold::peek(input) {
-            Ok(InlineCompTerm::Bold(input.parse()?))
+            Ok(ComponentTerm::Bold(input.parse()?))
         } else if Italic::peek(input) {
-            Ok(InlineCompTerm::Italic(input.parse()?))
+            Ok(ComponentTerm::Italic(input.parse()?))
         } else if Preformatted::peek(input) {
-            Ok(InlineCompTerm::Preformatted(input.parse()?))
+            Ok(ComponentTerm::Preformatted(input.parse()?))
         } else if Link::peek(input) {
-            Ok(InlineCompTerm::Link(input.parse()?))
+            Ok(ComponentTerm::Link(input.parse()?))
         } else {
             Err(Error::new(
                 input.span(),
@@ -99,7 +99,7 @@ impl Parse for Text {
 #[derive(Debug, Clone)]
 pub struct Bold {
     pub prefix: Ident,
-    pub target: InlineComp,
+    pub target: Component,
 }
 
 impl Bold {
@@ -132,7 +132,7 @@ impl Parse for Bold {
 #[derive(Debug, Clone)]
 pub struct Italic {
     pub prefix: Ident,
-    pub target: InlineComp,
+    pub target: Component,
 }
 
 impl Italic {
@@ -165,7 +165,7 @@ impl Parse for Italic {
 #[derive(Debug, Clone)]
 pub struct Preformatted {
     pub prefix: Ident,
-    pub target: InlineComp,
+    pub target: Component,
 }
 
 impl Preformatted {
@@ -198,7 +198,7 @@ impl Parse for Preformatted {
 #[derive(Debug, Clone)]
 pub struct Link {
     pub prefix: Ident,
-    pub target: InlineComp,
+    pub target: Component,
     pub location: Location,
 }
 

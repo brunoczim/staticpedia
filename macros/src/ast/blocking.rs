@@ -1,4 +1,4 @@
-use super::{inline::InlineComp, Peek};
+use super::{inline, Peek};
 use syn::{
     parse::{Error, Parse, ParseStream},
     Ident,
@@ -6,23 +6,23 @@ use syn::{
 };
 
 #[derive(Debug, Clone)]
-pub enum BlockingComp {
+pub enum Component {
     Paragraph(Paragraph),
     Image(Image),
 }
 
-impl Peek for BlockingComp {
+impl Peek for Component {
     fn peek(input: ParseStream) -> bool {
         Paragraph::peek(input) || Image::peek(input)
     }
 }
 
-impl Parse for BlockingComp {
+impl Parse for Component {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         if Paragraph::peek(input) {
-            Ok(BlockingComp::Paragraph(input.parse()?))
+            Ok(Component::Paragraph(input.parse()?))
         } else if Image::peek(input) {
-            Ok(BlockingComp::Image(input.parse()?))
+            Ok(Component::Image(input.parse()?))
         } else {
             Err(Error::new(input.span(), "Expected `p` or `img`"))
         }
@@ -32,7 +32,7 @@ impl Parse for BlockingComp {
 #[derive(Debug, Clone)]
 pub struct Paragraph {
     pub prefix: Ident,
-    pub content: InlineComp,
+    pub content: inline::Component,
 }
 
 impl Paragraph {
@@ -66,7 +66,7 @@ impl Parse for Paragraph {
 pub struct Image {
     pub prefix: Ident,
     pub alt: LitStr,
-    pub link: InlineComp,
+    pub link: inline::Component,
 }
 
 impl Image {

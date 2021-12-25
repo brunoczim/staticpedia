@@ -1,4 +1,4 @@
-use super::{blocking::BlockingComp, inline::InlineComp, Peek};
+use super::{blocking, inline, Peek};
 use syn::{
     bracketed,
     parse::{Error, Parse, ParseStream},
@@ -79,7 +79,7 @@ impl FieldType for PageTitleField {
 pub struct SectionTitleField;
 
 impl FieldType for SectionTitleField {
-    type Value = InlineComp;
+    type Value = inline::Component;
 
     fn name() -> &'static str {
         "title"
@@ -241,12 +241,12 @@ impl Parse for Children {
 
 #[derive(Debug, Clone)]
 pub struct Body {
-    pub terms: Punctuated<BlockingComp, token::Semi>,
+    pub terms: Punctuated<blocking::Component, token::Semi>,
 }
 
 impl Peek for Body {
     fn peek(input: ParseStream) -> bool {
-        BlockingComp::peek(input)
+        blocking::Component::peek(input)
     }
 }
 
@@ -255,7 +255,9 @@ impl Parse for Body {
         if input.peek(token::Semi) {
             Ok(Self { terms: Punctuated::new() })
         } else {
-            Ok(Self { terms: input.parse_terminated(BlockingComp::parse)? })
+            Ok(Self {
+                terms: input.parse_terminated(blocking::Component::parse)?,
+            })
         }
     }
 }
