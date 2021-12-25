@@ -1,4 +1,4 @@
-use super::{blocking, inline, Peek};
+use super::{blocking, inline, rust, Peek};
 use syn::{
     bracketed,
     parse::{Error, Parse, ParseStream},
@@ -241,7 +241,7 @@ impl Parse for Children {
 
 #[derive(Debug, Clone)]
 pub struct Body {
-    pub terms: Punctuated<blocking::Component, token::Semi>,
+    pub terms: Punctuated<rust::Inlinable<blocking::Component>, token::Semi>,
 }
 
 impl Peek for Body {
@@ -255,9 +255,7 @@ impl Parse for Body {
         if input.peek(token::Semi) {
             Ok(Self { terms: Punctuated::new() })
         } else {
-            Ok(Self {
-                terms: input.parse_terminated(blocking::Component::parse)?,
-            })
+            Ok(Self { terms: input.parse_terminated(rust::Inlinable::parse)? })
         }
     }
 }

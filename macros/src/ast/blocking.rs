@@ -1,4 +1,4 @@
-use super::{inline, Peek};
+use super::{inline, rust, Peek};
 use syn::{
     parse::{Error, Parse, ParseStream},
     Ident,
@@ -65,7 +65,7 @@ impl Parse for Paragraph {
 #[derive(Debug, Clone)]
 pub struct Image {
     pub prefix: Ident,
-    pub alt: LitStr,
+    pub alt: rust::Inlinable<LitStr>,
     pub link: inline::Component,
 }
 

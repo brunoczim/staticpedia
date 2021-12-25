@@ -1,4 +1,4 @@
-use super::{location::Location, Peek};
+use super::{location::Location, rust, Peek};
 use syn::{
     parenthesized,
     parse::{Error, Parse, ParseStream},
@@ -9,7 +9,7 @@ use syn::{
 
 #[derive(Debug, Clone)]
 pub struct Component {
-    pub terms: Vec<ComponentTerm>,
+    pub terms: Vec<rust::Inlinable<ComponentTerm>>,
 }
 
 impl Peek for Component {
@@ -199,7 +199,7 @@ impl Parse for Preformatted {
 pub struct Link {
     pub prefix: Ident,
     pub target: Component,
-    pub location: Location,
+    pub location: rust::Inlinable<Location>,
 }
 
 impl Link {

@@ -1,3 +1,4 @@
+pub mod rust;
 pub mod location;
 pub mod inline;
 pub mod blocking;
