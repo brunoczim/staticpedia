@@ -1,4 +1,6 @@
-use super::Peek;
+use super::{Expand, Peek};
+use proc_macro2::TokenStream;
+use quote::quote;
 use syn::{
     bracketed,
     parse::{Parse, ParseStream},
@@ -28,6 +30,13 @@ impl Parse for InlineRust {
     }
 }
 
+impl Expand for InlineRust {
+    fn expand(&self) -> TokenStream {
+        let expr = &self.content;
+        quote!((#expr))
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum Inlinable<T> {
     Plain(T),
@@ -52,6 +61,18 @@ where
             Ok(Inlinable::Inlined(input.parse()?))
         } else {
             Ok(Inlinable::Plain(input.parse()?))
+        }
+    }
+}
+
+impl<T> Expand for Inlinable<T>
+where
+    T: Expand,
+{
+    fn expand(&self) -> TokenStream {
+        match self {
+            Inlinable::Plain(item) => item.expand(),
+            Inlinable::Inlined(item) => item.expand(),
         }
     }
 }

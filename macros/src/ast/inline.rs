@@ -1,4 +1,5 @@
-use super::{location::Location, rust, Peek};
+use super::{location::Location, rust, Expand, Peek};
+use proc_macro2::TokenStream;
 use syn::{
     parenthesized,
     parse::{Error, Parse, ParseStream},
@@ -75,6 +76,19 @@ impl Parse for ComponentTerm {
                 input.span(),
                 "Expected string literal, `#`, `/`, `@`, `b`, `i`, `c` or `l`",
             ))
+        }
+    }
+}
+
+impl Expand for ComponentTerm {
+    fn expand(&self) -> TokenStream {
+        match self {
+            ComponentTerm::Text(term) => term.expand(),
+            ComponentTerm::Location(term) => term.expand(),
+            ComponentTerm::Bold(term) => term.expand(),
+            ComponentTerm::Italic(term) => term.expand(),
+            ComponentTerm::Preformatted(term) => term.expand(),
+            ComponentTerm::Link(term) => term.expand(),
         }
     }
 }
