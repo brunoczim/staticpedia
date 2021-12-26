@@ -74,7 +74,7 @@ impl Parse for ComponentTerm {
         } else {
             Err(Error::new(
                 input.span(),
-                "Expected string literal, `/`, `@`, `b`, `i`, `c` or `l`",
+                "Expected string literal, `#`, `/`, `@`, `b`, `i`, `c` or `l`",
             ))
         }
     }

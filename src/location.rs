@@ -1,6 +1,6 @@
 //! This module provides location, paths, Urls.
 
-use crate::render::{Context, Render};
+use crate::component::{Component, Context, InlineComponent};
 use percent_encoding::{percent_encode, CONTROLS};
 use std::{fmt, path::PathBuf, str};
 use thiserror::Error;
@@ -52,126 +52,14 @@ impl Location {
     }
 }
 
-impl Render for Location {
+impl Component for Location {
+    type Kind = InlineComponent;
+
     fn to_html(&self, fmt: &mut fmt::Formatter, ctx: Context) -> fmt::Result {
         match self {
             Location::Url(url) => write!(fmt, "{}", url),
             Location::Internal(int) => int.to_html(fmt, ctx),
         }
-    }
-}
-
-/// A location to an internal page, with optional ID. Always absolute (with the
-/// root pointing to the root of the encyclopedia).
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-pub struct InternalLoc {
-    /// Path to the document.
-    pub path: InternalPath,
-    /// ID of the section or specific object inside of the document.
-    pub id: Option<Id>,
-}
-
-impl From<InternalPath> for InternalLoc {
-    fn from(path: InternalPath) -> Self {
-        Self { path, id: None }
-    }
-}
-
-impl InternalLoc {
-    /// Parses an internal location. Path fragments separated by "/", ID
-    /// appended to the end with "#" between the path and the ID, if any ID
-    /// at all.
-    pub fn parse<S>(string: S) -> anyhow::Result<Self>
-    where
-        S: AsRef<str>,
-    {
-        let string = string.as_ref();
-        let hash = string
-            .as_bytes()
-            .iter()
-            .rposition(|&ch| ch == b'#')
-            .unwrap_or(string.len());
-
-        Ok(Self {
-            path: InternalPath::parse(&string[.. hash])?,
-            id: if hash == string.len() {
-                None
-            } else {
-                Some(Id::new(&string[hash + 1 ..])?)
-            },
-        })
-    }
-}
-
-impl fmt::Display for InternalLoc {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "{}", &self.path)?;
-
-        if let Some(id) = &self.id {
-            write!(fmt, "#{}", id)?;
-        }
-
-        Ok(())
-    }
-}
-
-impl Render for InternalLoc {
-    fn to_html(&self, fmt: &mut fmt::Formatter, ctx: Context) -> fmt::Result {
-        self.path.to_html(fmt, ctx)?;
-        if let Some(id) = &self.id {
-            fmt.write_str("#")?;
-            id.to_html(fmt, ctx)?;
-        }
-        Ok(())
-    }
-}
-
-/// Error when an invalid ID string is given to be parsed.
-#[derive(Debug, Clone, Error)]
-#[error("Invalid ID string")]
-pub struct InvalidId;
-
-/// An ID of a location.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Id {
-    contents: Box<str>,
-}
-
-impl Id {
-    /// Creates an ID from the desired string contents. The string can only
-    /// contain alphanumeric characters or '_' or '-'.
-    pub fn new<S>(contents: S) -> anyhow::Result<Self>
-    where
-        S: AsRef<str> + Into<Box<str>>,
-    {
-        let mut iter = contents.as_ref().as_bytes().iter();
-
-        iter.next().filter(|ch| ch.is_ascii_alphabetic()).ok_or(InvalidId)?;
-
-        for &ch in iter {
-            if !ch.is_ascii_alphanumeric() && ch != b'_' && ch != b'-' {
-                Err(InvalidId)?;
-            }
-        }
-
-        Ok(Self { contents: contents.into() })
-    }
-
-    /// The string contents of this ID.
-    pub fn as_str(&self) -> &str {
-        &self.contents
-    }
-}
-
-impl fmt::Display for Id {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.write_str(&self.as_str())
-    }
-}
-
-impl Render for Id {
-    fn to_html(&self, fmt: &mut fmt::Formatter, _ctx: Context) -> fmt::Result {
-        write!(fmt, "{}", self)
     }
 }
 
@@ -268,7 +156,9 @@ impl fmt::Display for InternalPath {
     }
 }
 
-impl Render for InternalPath {
+impl Component for InternalPath {
+    type Kind = InlineComponent;
+
     fn to_html(&self, fmt: &mut fmt::Formatter, ctx: Context) -> fmt::Result {
         if !self.eq_index(ctx.location()) {
             for _ in 0 .. ctx.location().dir_depth() {
@@ -279,6 +169,124 @@ impl Render for InternalPath {
             write!(fmt, "{}", ctx.renderer(&encoded))?;
         }
         Ok(())
+    }
+}
+
+/// A location to an internal page, with optional ID. Always absolute (with the
+/// root pointing to the root of the encyclopedia).
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub struct InternalLoc {
+    /// Path to the document.
+    pub path: InternalPath,
+    /// ID of the section or specific object inside of the document.
+    pub id: Option<Id>,
+}
+
+impl From<InternalPath> for InternalLoc {
+    fn from(path: InternalPath) -> Self {
+        Self { path, id: None }
+    }
+}
+
+impl InternalLoc {
+    /// Parses an internal location. Path fragments separated by "/", ID
+    /// appended to the end with "#" between the path and the ID, if any ID
+    /// at all.
+    pub fn parse<S>(string: S) -> anyhow::Result<Self>
+    where
+        S: AsRef<str>,
+    {
+        let string = string.as_ref();
+        let hash = string
+            .as_bytes()
+            .iter()
+            .rposition(|&ch| ch == b'#')
+            .unwrap_or(string.len());
+
+        Ok(Self {
+            path: InternalPath::parse(&string[.. hash])?,
+            id: if hash == string.len() {
+                None
+            } else {
+                Some(Id::new(&string[hash + 1 ..])?)
+            },
+        })
+    }
+}
+
+impl fmt::Display for InternalLoc {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        write!(fmt, "{}", &self.path)?;
+
+        if let Some(id) = &self.id {
+            write!(fmt, "#{}", id)?;
+        }
+
+        Ok(())
+    }
+}
+
+impl Component for InternalLoc {
+    type Kind = InlineComponent;
+
+    fn to_html(&self, fmt: &mut fmt::Formatter, ctx: Context) -> fmt::Result {
+        self.path.to_html(fmt, ctx)?;
+        if let Some(id) = &self.id {
+            fmt.write_str("#")?;
+            id.to_html(fmt, ctx)?;
+        }
+        Ok(())
+    }
+}
+
+/// Error when an invalid ID string is given to be parsed.
+#[derive(Debug, Clone, Error)]
+#[error("Invalid ID string")]
+pub struct InvalidId;
+
+/// An ID of a location.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Id {
+    contents: Box<str>,
+}
+
+impl Id {
+    /// Creates an ID from the desired string contents. The string can only
+    /// contain alphanumeric characters or '_' or '-'.
+    pub fn new<S>(contents: S) -> anyhow::Result<Self>
+    where
+        S: AsRef<str> + Into<Box<str>>,
+    {
+        let mut iter = contents.as_ref().as_bytes().iter();
+
+        iter.next().filter(|ch| ch.is_ascii_alphabetic()).ok_or(InvalidId)?;
+
+        for &ch in iter {
+            if !ch.is_ascii_alphanumeric() && ch != b'_' && ch != b'-' {
+                Err(InvalidId)?;
+            }
+        }
+
+        Ok(Self { contents: contents.into() })
+    }
+
+    /// The string contents of this ID.
+    pub fn as_str(&self) -> &str {
+        &self.contents
+    }
+}
+
+impl fmt::Display for Id {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        fmt.write_str(&self.as_str())
+    }
+}
+
+impl Component for Id {
+    type Kind = InlineComponent;
+
+    fn to_html(&self, fmt: &mut fmt::Formatter, _ctx: Context) -> fmt::Result {
+        write!(fmt, "{}", self)
     }
 }
 
